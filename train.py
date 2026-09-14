@@ -68,3 +68,12 @@ loss = model.cross_entropy_loss(
 )
 
 print("Initial loss:", loss)
+dW1, db1, dW2, db2 = model.backward(
+    X_train,
+    y_train_one_hot
+)
+
+print("dW1 shape:", dW1.shape)
+print("db1 shape:", db1.shape)
+print("dW2 shape:", dW2.shape)
+print("db2 shape:", db2.shape)

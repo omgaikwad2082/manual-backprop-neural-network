@@ -43,3 +43,24 @@ class NeuralNetwork:
         )
 
         return loss
+    def backward(self, X, y_true):
+        m = X.shape[0]
+
+        # Gradient at the output layer
+        dZ2 = (self.A2 - y_true) / m
+
+        # Gradients for W2 and b2
+        dW2 = self.A1.T @ dZ2
+        db2 = np.sum(dZ2, axis=0, keepdims=True)
+
+        # Gradient flowing into the hidden layer
+        dA1 = dZ2 @ self.W2.T
+
+        # Backpropagate through ReLU
+        dZ1 = dA1 * (self.Z1 > 0)
+
+        # Gradients for W1 and b1
+        dW1 = X.T @ dZ1
+        db1 = np.sum(dZ1, axis=0, keepdims=True)
+
+        return dW1, db1, dW2, db2
