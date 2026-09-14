@@ -1,9 +1,11 @@
 # Manual Backpropagation Neural Network
 
 A small feedforward neural network implemented from scratch using NumPy, with the backpropagation algorithm manually derived and implemented using the chain rule.
+
 The project uses a binary classification version of the Iris dataset and independently verifies the manually calculated gradients against PyTorch autograd.
 
 ## Features
+
 - Manual neural network implementation using NumPy
 - Forward propagation
 - ReLU activation
@@ -17,6 +19,7 @@ The project uses a binary classification version of the Iris dataset and indepen
 
 ## Network Architecture
 
+```text
 Input Layer (4)
        ↓
 Hidden Layer (8)
@@ -26,10 +29,12 @@ Hidden Layer (8)
 Output Layer (2)
        ↓
     Softmax
-
+```
 
 ## Dataset
+
 The Iris dataset from scikit-learn is used.
+
 Only the first two classes are selected, creating a binary classification problem.
 
 - Total samples: 100
@@ -50,11 +55,12 @@ The features are standardized using `StandardScaler`.
 
 The model uses full-batch gradient descent.
 
-| Parameter      | Value           |
-| Hidden neurons | 8               |
-| Learning rate  | 0.1             |
-| Epochs         | 1000            |
-| Optimizer      | Gradient Descent|
+| Parameter | Value |
+|-----------|-------|
+| Hidden neurons | 8 |
+| Learning rate | 0.1 |
+| Epochs | 1000 |
+| Optimizer | Gradient Descent |
 
 The training loss decreased from approximately `0.6933` to `0.0009`.
 
@@ -70,30 +76,31 @@ The gradients are calculated manually using the chain rule.
 
 For the output layer:
 
-
+```text
 dZ2 = (A2 - Y) / m
 dW2 = A1.T @ dZ2
 db2 = sum(dZ2)
-
+```
 
 The gradient is propagated through ReLU:
 
-
+```text
 dZ1 = dA1 * (Z1 > 0)
-
+```
 
 Then:
 
+```text
 dW1 = X.T @ dZ1
 db1 = sum(dZ1)
-
+```
 
 The parameters are updated using gradient descent:
 
-
+```text
 W = W - learning_rate * dW
 b = b - learning_rate * db
-
+```
 
 No automatic differentiation is used in the actual neural network implementation.
 
@@ -103,28 +110,32 @@ The manually calculated gradients were compared with an equivalent PyTorch imple
 
 | Parameter | Maximum Difference | Result |
 |-----------|-------------------:|--------|
-| W1        | 4.34 × 10⁻¹⁹       | PASS   |
-| b1        | 2.17 × 10⁻¹⁹       | PASS   |
-| W2        | 8.67 × 10⁻¹⁹       | PASS   |
-| b2        | 2.78 × 10⁻¹⁷       | PASS   |
+| W1 | 4.34 × 10⁻¹⁹ | PASS |
+| b1 | 2.17 × 10⁻¹⁹ | PASS |
+| W2 | 8.67 × 10⁻¹⁹ | PASS |
+| b2 | 2.78 × 10⁻¹⁷ | PASS |
 
 All gradients passed the verification test.
 
-
+```text
+ALL GRADIENT TESTS PASSED
+```
 
 PyTorch autograd is used only as an independent verification reference and is not used for training the NumPy network.
 
 ## Results
 
 The training loss curve is generated during training and saved at:
-results/loss_curve.png
 
+```text
+results/loss_curve.png
+```
 
 The loss decreases consistently during training, demonstrating that the manually implemented network is learning the classification task.
 
 ## Project Structure
 
-
+```text
 manual-backprop-neural-network/
 │
 ├── README.md
@@ -140,7 +151,7 @@ manual-backprop-neural-network/
 │
 └── results/
     └── loss_curve.png
-
+```
 
 ## Installation
 
@@ -168,9 +179,9 @@ This will:
 
 The loss graph is saved to:
 
-
+```text
 results/loss_curve.png
-
+```
 
 ## Run Gradient Verification
 
@@ -182,8 +193,9 @@ python test/test_gradients.py
 
 A successful verification produces:
 
-
+```text
 ALL GRADIENT TESTS PASSED
+```
 
 ## Technologies
 
