@@ -82,6 +82,8 @@ print("db2 shape:", db2.shape)
 learning_rate = 0.1
 epochs = 1000
 
+loss_history = []
+
 for epoch in range(epochs):
 
     # Forward pass
@@ -92,6 +94,8 @@ for epoch in range(epochs):
         y_train_one_hot,
         predictions
     )
+    loss_history.append(loss)
+
 
     # Backward pass
     dW1, db1, dW2, db2 = model.backward(
@@ -117,3 +121,13 @@ accuracy = np.mean(predicted_classes == y_test)
 
 print("Test accuracy:", accuracy)
 print("Test accuracy (%):", accuracy * 100)
+
+import matplotlib.pyplot as plt
+
+plt.figure()
+plt.plot(loss_history)
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.title("Training Loss")
+plt.savefig("results/loss_curve.png")
+plt.show()
