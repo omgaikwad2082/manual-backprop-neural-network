@@ -1,218 +1,115 @@
-# Manual Backpropagation Neural Network
+# Iris Neural Network
 
-A small feedforward neural network implemented from scratch using NumPy, with the backpropagation algorithm manually derived and implemented using the chain rule.
+A simple neural network that classifies the Iris dataset into 3 classes.
 
-The project uses a binary classification version of the Iris dataset and independently verifies the manually calculated gradients against PyTorch autograd.
+## Requirements
 
-## Features
+- Python 3.9+
+- NumPy
+- scikit-learn
+- Matplotlib
 
-- Manual neural network implementation using NumPy
-- Forward propagation
-- ReLU activation
-- Softmax output
-- Cross-entropy loss
-- Manual backpropagation
-- Gradient descent training
-- Training loss visualization
-- Independent gradient verification using PyTorch
-- Test-set evaluation
+Install dependencies:
 
-## Network Architecture
-
-```text
-Input Layer (4)
-       ↓
-Hidden Layer (8)
-       ↓
-     ReLU
-       ↓
-Output Layer (2)
-       ↓
-    Softmax
+```bash
+pip install numpy scikit-learn matplotlib
 ```
-
-## Dataset
-
-The Iris dataset from scikit-learn is used.
-
-Only the first two classes are selected, creating a binary classification problem.
-
-- Total samples: 100
-- Training samples: 80
-- Testing samples: 20
-- Input features: 4
-
-The four input features are:
-
-- Sepal length
-- Sepal width
-- Petal length
-- Petal width
-
-The features are standardized using `StandardScaler`.
-
-## Training
-
-The model uses full-batch gradient descent.
-
-| Parameter | Value |
-|-----------|-------|
-| Hidden neurons | 8 |
-| Learning rate | 0.1 |
-| Epochs | 1000 |
-| Optimizer | Gradient Descent |
-
-The training loss decreased from approximately `0.6933` to `0.0009`.
-
-The model achieved:
-
-**Test Accuracy: 100.0% (20/20)**
-
-Because the dataset is small and the two selected classes are relatively separable, this result should not be interpreted as evidence of general performance on more difficult datasets.
-
-## Manual Backpropagation
-
-The gradients are calculated manually using the chain rule.
-
-For the output layer:
-
-```text
-dZ2 = (A2 - Y) / m
-dW2 = A1.T @ dZ2
-db2 = sum(dZ2)
-```
-
-The gradient is propagated through ReLU:
-
-```text
-dZ1 = dA1 * (Z1 > 0)
-```
-
-Then:
-
-```text
-dW1 = X.T @ dZ1
-db1 = sum(dZ1)
-```
-
-The parameters are updated using gradient descent:
-
-```text
-W = W - learning_rate * dW
-b = b - learning_rate * db
-```
-
-No automatic differentiation is used in the actual neural network implementation.
-
-## Gradient Verification
-
-The manually calculated gradients were compared with an equivalent PyTorch implementation.
-
-| Parameter | Maximum Difference | Result |
-|-----------|-------------------:|--------|
-| W1 | 4.34 × 10⁻¹⁹ | PASS |
-| b1 | 2.17 × 10⁻¹⁹ | PASS |
-| W2 | 8.67 × 10⁻¹⁹ | PASS |
-| b2 | 2.78 × 10⁻¹⁷ | PASS |
-
-All gradients passed the verification test.
-
-```text
-ALL GRADIENT TESTS PASSED
-```
-
-PyTorch autograd is used only as an independent verification reference and is not used for training the NumPy network.
-
-## Results
-
-The training loss curve is generated during training and saved at:
-
-```text
-results/loss_curve.png
-```
-
-The loss decreases consistently during training, demonstrating that the manually implemented network is learning the classification task.
 
 ## Project Structure
 
 ```text
-manual-backprop-neural-network/
-│
-├── README.md
-├── WRITEUP.md
-├── requirements.txt
-├── train.py
-│
+project-folder/
 ├── src/
 │   └── neural_network.py
-│
-├── test/
-│   └── test_gradients.py
-│
-└── results/
-    └── loss_curve.png
+├── results/
+├── main.py
+└── README.md
 ```
 
-## Installation
+Make sure `src/neural_network.py` contains the `NeuralNetwork` class with:
 
-Install the required Python packages using:
+```python
+forward()
+cross_entropy_loss()
+backward()
+update_parameters()
+```
+
+## Run the Code
+
+Open a terminal in the project folder and run:
 
 ```bash
-python -m pip install -r requirements.txt
+python main.py
 ```
 
-## Run Training
-
-Run the training program from the project root:
+If the `results` folder does not exist, create it first:
 
 ```bash
-python train.py
+mkdir results
 ```
 
-This will:
+## What the Code Does
 
-1. Load and preprocess the Iris dataset.
-2. Train the neural network for 1000 epochs.
-3. Display the training loss.
-4. Evaluate the model on the test set.
-5. Generate the training loss graph.
+The program:
 
-The loss graph is saved to:
+1. Loads the Iris dataset.
+2. Splits it into:
+   - 100 training samples
+   - 25 validation samples
+   - 25 test samples
+3. Standardizes the features using the training data.
+4. Creates a neural network:
+   - Input: 4 features
+   - Hidden layer: 8 neurons
+   - Output: 3 classes
+5. Trains the model for 1000 epochs.
+6. Calculates validation and test accuracy.
+7. Saves the training/validation loss graph.
+
+## Expected Output
+
+The terminal will display information such as:
+
+```text
+Training samples: 100
+Validation samples: 25
+Testing samples: 25
+Number of input features: 4
+
+Initial loss: ...
+Epoch 0, Loss: ..., Validation Loss: ...
+...
+Validation accuracy: ...
+Test accuracy: ...
+```
+
+The prediction output should have shape:
+
+```text
+(100, 3)
+```
+
+## Results
+
+After training, the loss graph is saved as:
 
 ```text
 results/loss_curve.png
 ```
 
-## Run Gradient Verification
+The graph shows:
 
-Run the independent gradient verification test:
+- Training Loss
+- Validation Loss
+
+The final validation and test accuracy are printed in the terminal.
+
+## Quick Start
 
 ```bash
-python test/test_gradients.py
+pip install numpy scikit-learn matplotlib
+mkdir results
+python main.py
 ```
 
-A successful verification produces:
-
-```text
-ALL GRADIENT TESTS PASSED
-```
-
-## Technologies
-
-- Python
-- NumPy
-- scikit-learn
-- Matplotlib
-- PyTorch (gradient verification only)
-
-## Future Improvements
-
-Possible extensions include:
-
-- Additional activation functions such as Sigmoid or Tanh
-- Mini-batch training
-- Manual implementation of Momentum or Adam
-- Numerical gradient checking
-- Multi-class classification using all three Iris classes
-- Additional hidden layers
-- Experimenting with different learning rates and network architectures

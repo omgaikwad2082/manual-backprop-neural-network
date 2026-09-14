@@ -2,351 +2,546 @@
 
 ## 1. Objective
 
-The objective of this project is to build a small artificial neural network and implement the backpropagation algorithm manually using NumPy.
+The objective of this project is to implement and train a small feedforward neural network while manually deriving and calculating the backpropagation gradients using the chain rule.
 
-The implementation does not use automatic differentiation or built-in backpropagation functions. All gradients are derived using the chain rule and calculated manually.
+The neural network is implemented using NumPy and does not use automatic differentiation for training. The gradients are calculated explicitly from the mathematical derivatives of each layer.
 
-The network is trained on a binary classification task using the Iris dataset. The manually calculated gradients are independently verified against PyTorch autograd to check the correctness of the implementation.
+The model is trained on the Iris dataset for a 3-class classification task. A separate validation set is used to monitor generalization and identify possible overfitting. The manually calculated gradients are independently verified against PyTorch autograd.
 
-## 2. Network Architecture
+---
 
-The neural network used in this project has the following architecture:
+## 2. Network Architecture and Dataset
 
-Input Layer → Hidden Layer → Output Layer
+The network has the following architecture:
 
-- Input layer: 4 features
-- Hidden layer: 8 neurons
+**Input (4) → Hidden Layer (8) → ReLU → Output (3) → Softmax**
+
+### Network Configuration
+
+- Input features: 4
+- Hidden neurons: 8
+- Output neurons: 3
 - Hidden activation: ReLU
-- Output layer: 2 neurons
 - Output activation: Softmax
 - Loss function: Cross-entropy
+- Optimizer: Full-batch Gradient Descent
+- Learning rate: 0.1
+- Epochs: 1000
 
-The model can therefore be represented as:
+The Iris dataset from scikit-learn is used. Unlike the earlier binary version of the project, all three Iris classes are now included.
 
-4 → 8 → 2
+The dataset contains 150 samples and is divided into:
 
-The Iris dataset contains three classes, but this project uses only the first two classes to create a binary classification problem.
+- 100 training samples
+- 25 validation samples
+- 25 test samples
 
-## 3. Dataset and Preprocessing
-
-The Iris dataset was obtained using scikit-learn.
-
-Only the first two Iris classes were selected, resulting in 100 total samples. The dataset contains four input features:
+The four input features are:
 
 - Sepal length
 - Sepal width
 - Petal length
 - Petal width
 
-The data was divided into:
-- 80 training samples
-- 20 testing samples
+The three classes are:
 
-The training and testing split was performed using stratified sampling with a fixed random state.
+- Iris setosa
+- Iris versicolor
+- Iris virginica
 
-The input features were standardized using `StandardScaler`. The scaler was fitted only on the training data and then applied to the test data.
+Stratified sampling is used when splitting the dataset so that the class distribution is maintained across the different subsets.
 
-The class labels were converted into one-hot encoded vectors for use with the cross-entropy loss function.
+---
+
+## 3. Data Preprocessing
+
+The input features are standardized using `StandardScaler`.
+
+The scaler is fitted only on the training data:
+
+\[
+X_{train}' = StandardScaler.fit(X_{train})
+\]
+
+The fitted scaler is then applied to the validation and test sets.
+
+This is important because fitting the scaler using validation or test data could introduce data leakage.
+
+The class labels are converted into one-hot encoded vectors because the network uses categorical cross-entropy loss.
+
+The final data distribution is:
+
+| Dataset | Number of Samples | Purpose |
+|---|---:|---|
+| Training | 100 | Used for learning model parameters |
+| Validation | 25 | Used to monitor generalization |
+| Test | 25 | Used for final evaluation |
+
+---
 
 ## 4. Forward Pass
 
-The forward pass calculates the network's prediction from the input data.
+The forward pass calculates predictions from the input data.
 
 The first linear layer is:
-Z1 = XW1 + b1
 
-The result is passed through the ReLU activation function:
-A1 = ReLU(Z1)
+\[
+Z_1 = XW_1+b_1
+\]
+
+The ReLU activation is then applied:
+
+\[
+A_1 = ReLU(Z_1)
+\]
+
 where:
-ReLU(x) = max(0, x)
-The hidden-layer output is then passed to the second linear layer:
-Z2 = A1W2 + b2
 
-Finally, the output is converted into class probabilities using Softmax:
-A2 = Softmax(Z2)
-The Softmax function converts the two output values into probabilities whose sum is 1.
-The complete forward pass is therefore:
-X → Linear Layer → ReLU → Linear Layer → Softmax → Prediction
+\[
+ReLU(x)=\max(0,x)
+\]
 
-For numerical stability, the maximum value in each row of Z2 is subtracted before calculating the exponential in the Softmax function.
-The implementation was tested by checking that the output probabilities had the expected shape and that the probabilities for each sample summed to approximately 1.
+The second linear layer is:
+
+\[
+Z_2=A_1W_2+b_2
+\]
+
+The final output is calculated using Softmax:
+
+\[
+A_2=Softmax(Z_2)
+\]
+
+The complete forward pass is:
+
+**Input → Linear → ReLU → Linear → Softmax → Class Probabilities**
+
+A numerically stable implementation of Softmax is used by subtracting the maximum value in each row before calculating the exponential.
+
+For the current implementation, the output shape is:
+
+\[
+(100,3)
+\]
+
+because there are 100 training samples and 3 output classes.
+
+The first prediction from the training run was:
+
+```text
+[0.33331243 0.3333818  0.33330577]
+```
+
+The probabilities sum to:
+
+```text
+1.0
+```
+
+This confirms that the Softmax output represents a valid probability distribution.
+
+---
 
 ## 5. Cross-Entropy Loss
-The network uses categorical cross-entropy to measure the difference between the predicted probabilities and the true class labels.
 
-For one sample, the loss is:
-L = -Σ y_i log(p_i)
+The network uses categorical cross-entropy loss.
+
+For one-hot encoded targets:
+
+\[
+L=-\frac{1}{m}\sum_{j=1}^{m}\sum_i y_{ji}\log(p_{ji})
+\]
 
 where:
-- y_i is the true one-hot encoded label
-- p_i is the predicted probability for class i
 
-The final loss is the mean loss over all training samples.
-A small epsilon value is used when calculating the logarithm to prevent numerical problems caused by log(0).
-The initial loss was approximately 0.693, which is close to the expected value for a two-class classifier making nearly random predictions.
-As training progressed, the loss decreased significantly, demonstrating that the network was learning from the data.
+- \(m\) is the number of samples
+- \(y\) is the one-hot encoded target
+- \(p\) is the predicted probability
+
+A small epsilon value is used before taking the logarithm to avoid numerical problems caused by `log(0)`.
+
+The initial loss was:
+
+\[
+\boxed{1.09865}
+\]
+
+For a three-class classifier making nearly uniform initial predictions, the expected cross-entropy is approximately:
+
+\[
+\ln(3)\approx1.0986
+\]
+
+which agrees with the observed initial loss.
+
+---
 
 ## 6. Manual Backpropagation
 
-Backpropagation calculates how much each parameter contributed to the final loss.
-The gradients are derived using the chain rule and are calculated manually using NumPy.
-The forward pass is:
-X → Z1 → A1 → Z2 → A2 → Loss
-During backpropagation, the gradients flow in the reverse direction:
-Loss → A2 → Z2 → A1 → Z1 → W1
+Backpropagation calculates the gradient of the loss with respect to every trainable parameter.
 
-### 6.1 Gradient at the Output Layer
+The forward computation is:
 
-Because the output layer uses Softmax together with cross-entropy loss, their derivatives simplify to:
-dZ2 = (A2 - Y) / m
-where:
-- A2 is the predicted probability matrix
-- Y is the one-hot encoded target matrix
-- m is the number of training samples
-This gives the gradient of the loss with respect to the output layer's pre-activation values.
+**X → Z1 → A1 → Z2 → A2 → Loss**
 
-### 6.2 Gradients for the Second Layer
+During backpropagation, the gradients are calculated in the reverse direction using the chain rule.
 
-The second layer is:
-Z2 = A1W2 + b2
-Using the chain rule:
-dW2 = A1ᵀ dZ2
-The bias gradient is
-db2 = Σ dZ2
-The gradient that needs to be propagated back into the hidden layer is:
-dA1 = dZ2 W2ᵀ
+### Output Layer
 
-### 6.3 Backpropagation Through ReLU
+For Softmax combined with cross-entropy loss, the derivative simplifies to:
 
-The hidden layer uses the ReLU activation:
-A1 = ReLU(Z1)
-The derivative of ReLU is:
-dReLU/dZ1 = 1, if Z1 > 0
-            0, if Z1 ≤ 0
+\[
+dZ_2=\frac{A_2-Y}{m}
+\]
+
+For:
+
+\[
+Z_2=A_1W_2+b_2
+\]
+
+the gradients are:
+
+\[
+dW_2=A_1^TdZ_2
+\]
+
+\[
+db_2=\sum dZ_2
+\]
+
+The gradient passed to the hidden layer is:
+
+\[
+dA_1=dZ_2W_2^T
+\]
+
+### ReLU Derivative
+
+Since:
+
+\[
+A_1=ReLU(Z_1)
+\]
+
+the derivative is:
+
+\[
+ReLU'(Z_1)=
+\begin{cases}
+1 & Z_1>0\\
+0 & Z_1\leq0
+\end{cases}
+\]
+
 Therefore:
-dZ1 = dA1 * (Z1 > 0)
-The expression `(Z1 > 0)` creates a mask that allows gradients to pass through neurons where the ReLU was active and sets the gradient to zero for inactive neurons.
 
-### 6.4 Gradients for the First Layer
+\[
+dZ_1=dA_1*(Z_1>0)
+\]
 
-The first layer is:Z1 = XW1 + b1
-Therefore:
-dW1 = Xᵀ dZ1
-and:
-db1 = Σ dZ1
-These gradients are then used to update the parameters.
+The expression `(Z1 > 0)` acts as a mask that allows gradients to pass through active ReLU neurons.
 
-### 6.5 Parameter Update
+### First Layer
 
-Gradient descent is used to update the weights and biases:
-W = W - η dW
-b = b - η db
-where η is the learning rate.
-In this project, the learning rate was set to 0.1.
-No automatic differentiation or built-in backpropagation function is used in the neural network implementation. The gradients are calculated directly from the mathematical derivatives above.
+For:
 
-## 7. Training Process
+\[
+Z_1=XW_1+b_1
+\]
 
-The network was trained using gradient descent.
+the gradients are:
 
-For each training epoch, the following steps were performed:
+\[
+dW_1=X^TdZ_1
+\]
 
-1. Perform a forward pass to calculate predictions.
-2. Calculate the cross-entropy loss.
-3. Perform the manual backward pass to calculate gradients.
-4. Update all weights and biases using gradient descent.
-5. Store the loss value for visualization.
+\[
+db_1=\sum dZ_1
+\]
 
-The training configuration was:
+The parameters are updated using gradient descent:
 
-- Learning rate: 0.1
-- Number of epochs: 1000
-- Hidden neurons: 8
-- Optimizer: Gradient Descent
-- Batch: Full training dataset
+\[
+W=W-\eta dW
+\]
 
-The loss was recorded after every epoch so that the learning behavior of the network could be visualized.
+\[
+b=b-\eta db
+\]
 
-The training loss decreased from approximately 0.693 at the beginning to less than 0.001 by the end of training.
+where \(\eta\) is the learning rate.
 
-This large decrease in loss indicates that the manually implemented network successfully learned to distinguish between the two Iris classes.
+The learning rate used is:
 
-## 8. Results
+\[
+\eta=0.1
+\]
 
-The network successfully learned the binary classification task.
+The resulting gradient dimensions from the current implementation are:
 
-The training loss decreased consistently during training:
+| Gradient | Shape |
+|---|---|
+| dW1 | (4, 8) |
+| db1 | (1, 8) |
+| dW2 | (8, 3) |
+| db2 | (1, 3) |
 
-| Epoch | Loss |
-|------:|-----:|
-| 0 | 0.6933 |
-| 100 | 0.0404 |
-| 200 | 0.0081 |
-| 300 | 0.0041 |
-| 400 | 0.0027 |
-| 500 | 0.0019 |
-| 600 | 0.0015 |
-| 700 | 0.0012 |
-| 800 | 0.0010 |
-| 900 | 0.0009 |
+These dimensions are consistent with the network architecture.
 
-The loss curve is saved in:
+---
 
-`results/loss_curve.png`
+## 7. Training
 
-The graph shows a rapid reduction in loss during the early stages of training, followed by a slower decrease as the model approaches a low-loss solution.
+The network is trained using full-batch gradient descent for 1000 epochs.
 
-The model was also evaluated on the held-out test set after training.
-The model achieved 100.0% test accuracy (20/20 correct predictions) on the held-out test set. However, this result should be interpreted cautiously because the dataset is small and the task uses only two relatively separable Iris classes
+For every epoch:
 
-## 9. Gradient Verification
+1. Perform a forward pass on the training data.
+2. Calculate the training loss.
+3. Perform manual backpropagation.
+4. Update the weights and biases.
+5. Perform a forward pass on the validation data.
+6. Calculate and store the validation loss.
 
-To verify the correctness of the manually implemented backpropagation, the gradients were compared against gradients calculated independently using PyTorch autograd.
+The training and validation losses were recorded throughout the process.
 
-PyTorch was used only as a reference for verification. It is not used anywhere in the actual neural network implementation or training process.
+### Training Results
 
-The verification process was:
+| Epoch | Training Loss | Validation Loss |
+|---:|---:|---:|
+| 0 | 1.0987 | 1.0986 |
+| 100 | 0.5069 | 0.5090 |
+| 200 | 0.2492 | 0.2291 |
+| 300 | 0.1494 | 0.1503 |
+| 400 | 0.1024 | 0.1170 |
+| 500 | 0.0796 | 0.1005 |
+| 600 | 0.0665 | 0.0923 |
+| 700 | 0.0579 | 0.0890 |
+| 800 | 0.0517 | 0.0882 |
+| 900 | 0.0470 | 0.0891 |
 
-1. Create a small test dataset.
-2. Initialize the NumPy model.
-3. Calculate gradients using the manually implemented `backward()` function.
-4. Create an equivalent computation in PyTorch using the same inputs and parameters.
-5. Use PyTorch autograd to calculate reference gradients.
-6. Compare the manual gradients with the reference gradients.
-7. Check whether the maximum absolute difference is below a specified tolerance.
+The training loss decreased consistently from approximately **1.0987** to **0.0470**.
 
-The tolerance used was:
+The validation loss also decreased substantially, reaching a minimum of approximately **0.0882 around epoch 800**, before increasing slightly to **0.0891** at epoch 900.
 
-`1 × 10⁻⁷`
+This small increase near the end suggests that the model may begin to overfit if training continues indefinitely, although the validation performance remains strong.
 
-### Verification Results
+---
 
-The comparison produced the following results:
+## 8. Validation and Test Results
 
-| Parameter | Maximum Difference | Result |
-|-----------|-------------------:|--------|
-| W1 | 4.34 × 10⁻¹⁹ | PASS |
-| b1 | 2.17 × 10⁻¹⁹ | PASS |
-| W2 | 8.67 × 10⁻¹⁹ | PASS |
-| b2 | 2.78 × 10⁻¹⁷ | PASS |
+The model was evaluated separately on the validation and test sets after training.
 
-All differences were far below the chosen tolerance.
+### Validation Accuracy
 
-The final output of the verification program was:
+The final validation accuracy was:
 
-`ALL GRADIENT TESTS PASSED`
+\[
+\boxed{96.0\%}
+\]
 
-This provides strong evidence that the manually derived gradients match the gradients produced by an independent automatic differentiation system.
+This corresponds to:
 
-### Important Implementation Constraint
+\[
+24/25
+\]
 
-The neural network itself does not use:
+correct validation predictions.
 
-- `torch.autograd`
-- `.backward()`
-- PyTorch tensors for training
-- Any automatic differentiation library
+### Test Accuracy
 
-The actual forward pass, loss calculation, backpropagation, and parameter updates are implemented using NumPy.
+The final test accuracy was:
 
-PyTorch autograd is used only in the separate gradient verification test.
+\[
+\boxed{88.0\%}
+\]
 
-## 10. Gradient Debugging and Common Mistakes
+This corresponds to:
 
-Implementing backpropagation manually requires careful handling of matrix dimensions, activation derivatives, and averaging over the training samples.
+\[
+22/25
+\]
 
-Several potential sources of gradient errors were considered during implementation.
+correct test predictions.
 
-### 10.1 ReLU Derivative
+### Summary
 
-A common mistake when implementing backpropagation is to propagate the gradient through the ReLU activation without applying its derivative.
+| Metric | Result |
+|---|---:|
+| Training samples | 100 |
+| Validation samples | 25 |
+| Test samples | 25 |
+| Final validation accuracy | **96.0%** |
+| Final test accuracy | **88.0%** |
+| Final training loss at epoch 900 | **0.0470** |
+| Validation loss at epoch 900 | **0.0891** |
+| Lowest recorded validation loss | **0.0882** |
 
-The correct calculation is:
+The difference between validation accuracy and test accuracy also shows why a separate test set is useful. Performance on a small dataset can vary depending on which samples happen to be included in each split.
 
-dZ1 = dA1 * (Z1 > 0)
+---
 
-The `(Z1 > 0)` term acts as a mask. Without this mask, gradients would incorrectly pass through neurons whose ReLU activation was zero.
+## 9. Mistakes, Overfitting and Improvements
 
-### 10.2 Averaging the Output Gradient
+During the development of the project, an important issue was identified with the earlier dataset setup.
 
-Another important detail is the division by the number of samples:
+### Initial Problem: Overfitting
 
-dZ2 = (A2 - Y) / m
+The original version of the project used only two Iris classes, giving a total of **100 samples**. The data was split into:
 
-The loss function calculates the mean loss over all samples, so the corresponding gradient must also be averaged over the batch.
+- 80 training samples
+- 20 test samples
 
-### 10.3 Matrix Dimensions
+The model achieved **100% test accuracy** on that setup.
 
-The dimensions of every gradient were checked to ensure that the chain rule was being applied correctly.
+However, this result was potentially misleading because the dataset was very small and the selected two classes were relatively easy to separate. The model was also being trained on a large proportion of the available data, making it difficult to properly monitor generalization during training.
 
-For the training data, the main dimensions are:
+This raised a concern that the model could be fitting the training data too closely rather than demonstrating robust generalization.
 
-- X: (80, 4)
-- W1: (4, 8)
-- b1: (1, 8)
-- W2: (8, 2)
-- b2: (1, 2)
-- dW1: (4, 8)
-- db1: (1, 8)
-- dW2: (8, 2)
-- db2: (1, 2)
+### Solution: Larger Dataset and Validation Split
 
-Checking these dimensions helped ensure that the matrix multiplications represented the intended mathematical operations.
+To address this issue, the dataset was changed to use the **complete Iris dataset**, including all three classes.
 
-### 10.4 Gradient Verification as a Debugging Tool
+The new split is:
 
-Instead of relying only on the training loss, the implementation was tested using an independent gradient verification program.
+```text
+150 total samples
+       │
+       ├── 100 Training
+       │
+       └── 50 Remaining
+              │
+              ├── 25 Validation
+              │
+              └── 25 Test
+```
 
-The manually calculated gradients were compared with PyTorch autograd gradients using the same parameters and input data.
+This provides a dedicated validation set for monitoring generalization during training.
 
-All four gradients passed the verification test with differences far below the selected tolerance.
+The validation loss is calculated after each training update. By comparing training and validation loss, we can identify behavior such as:
 
-This verification made it possible to distinguish between problems in the gradient calculations and other possible training issues such as the learning rate or data preprocessing.
+```text
+Training loss ↓
+Validation loss ↓
+        → Good generalization
 
-## 11. Limitations and Future Improvements
+Training loss ↓
+Validation loss ↑
+        → Possible overfitting
+```
 
-Although the network successfully performs the classification task, the implementation is intentionally small and educational.
+In the current run, the validation loss decreased from **1.0986** to a minimum of approximately **0.0882**, while the training loss continued decreasing. The validation loss then increased slightly to **0.0891** by epoch 900.
 
-Some limitations are:
+Therefore, the current run does not show severe overfitting, but the small increase in validation loss near the end indicates that continued training could eventually lead to overfitting.
 
-- The network contains only one hidden layer.
-- The model is trained using full-batch gradient descent.
-- Only the first two Iris classes are used.
-- The dataset is relatively small and simple.
-- The implementation does not include advanced optimizers such as Adam.
-- There is no regularization such as dropout or L2 regularization.
+The final test accuracy of **88.0%** is also more conservative than the previous 100% result, giving a more realistic indication of generalization on unseen data.
 
-Possible future improvements include:
+---
 
-- Adding more hidden layers.
-- Supporting additional activation functions such as Sigmoid or Tanh.
-- Implementing Momentum or Adam manually.
-- Supporting mini-batch training.
-- Extending the model to all three Iris classes.
-- Adding numerical gradient checking in addition to the PyTorch comparison.
-- Experimenting with different learning rates and network sizes.
+## 10. Gradient Verification
 
-These improvements would make the implementation more flexible while still allowing the underlying mathematics of backpropagation to remain visible.
+Manual backpropagation is susceptible to mistakes such as:
 
-## 12. Conclusion
+- Incorrect matrix dimensions
+- Missing activation derivatives
+- Incorrect batch averaging
+- Incorrect transposes
+- Incorrect signs in parameter updates
 
-This project demonstrates a complete neural network implemented from the ground up using NumPy.
+A separate gradient verification program is used to check the manually calculated gradients.
+
+The NumPy network is compared with an equivalent PyTorch implementation using the same parameters and inputs.
+
+PyTorch autograd is used only as an independent reference and is not used for training the actual NumPy neural network.
+
+The gradients checked are:
+
+- \(W_1\)
+- \(b_1\)
+- \(W_2\)
+- \(b_2\)
+
+The comparison uses a tolerance of:
+
+\[
+10^{-7}
+\]
+
+The expected successful output is:
+
+```text
+ALL GRADIENT TESTS PASSED
+```
+
+This provides strong evidence that the manually derived gradients have been implemented correctly.
+
+---
+
+## 11. Loss Visualization
+
+The training program plots both training and validation loss:
+
+```text
+Training Loss
+Validation Loss
+```
+
+The resulting graph is saved to:
+
+```text
+results/loss_curve.png
+```
+
+The two curves provide a visual way to inspect learning and generalization.
+
+The training loss continues to decrease throughout the run, while the validation loss decreases rapidly at first and then levels off.
+
+This behavior is consistent with a model that learns the classification task effectively while showing a small amount of possible overfitting near the later epochs.
+
+---
+
+## 12. Limitations
+
+The implementation is intentionally small so that the mathematics of neural network training remains visible.
+
+The main limitations are:
+
+- Only one hidden layer is used.
+- The hidden layer contains 8 neurons.
+- Full-batch gradient descent is used.
+- The Iris dataset is small.
+- No regularization is implemented.
+- No early stopping is implemented.
+- The learning rate is fixed at 0.1.
+- Validation and test sets contain only 25 samples each, so their accuracy can vary significantly with the particular split.
+
+Because of the small dataset size, the reported accuracy should not be interpreted as evidence of performance on larger or more difficult datasets.
+
+---
+
+## 13. Conclusion
+
+This project demonstrates a complete feedforward neural network implemented from the ground up using NumPy.
 
 The implementation includes:
 
 - Data preprocessing
+- Stratified train/validation/test splitting
 - Forward propagation
 - ReLU activation
-- Softmax output
+- Softmax
 - Cross-entropy loss
 - Manual backpropagation
 - Gradient descent
-- Model evaluation
-- Training loss visualization
+- Validation monitoring
+- Test evaluation
+- Loss visualization
 - Independent gradient verification
 
-The most important part of the project was implementing backpropagation manually using the chain rule rather than relying on an automatic differentiation framework.
+The major improvement during development was recognizing that the earlier binary Iris setup could give an overly optimistic evaluation. The project was therefore changed to use the complete **150-sample Iris dataset**, divided into **100 training, 25 validation, and 25 test samples**.
 
-The gradient verification results showed that the manually calculated gradients closely matched PyTorch's independently calculated gradients, providing strong evidence that the implementation is mathematically correct.
+The final run achieved **96.0% validation accuracy** and **88.0% test accuracy**. The validation loss decreased substantially and remained close to the training loss, with only a small increase near the end of training.
 
-The project therefore demonstrates both the practical implementation and the underlying mathematics of neural network training.
+The project demonstrates not only how to implement backpropagation manually, but also why separating training, validation, and test data is important when evaluating whether a neural network is actually generalizing to unseen data.
