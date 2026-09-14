@@ -56,3 +56,15 @@ predictions = model.forward(X_train)
 print("Prediction shape:", predictions.shape)
 print("First prediction:", predictions[0])
 print("Sum of probabilities:", np.sum(predictions[0]))
+
+# Convert labels to one-hot encoding
+y_train_one_hot = np.zeros((y_train.size, 2))
+y_train_one_hot[np.arange(y_train.size), y_train] = 1
+
+# Calculate the loss
+loss = model.cross_entropy_loss(
+    y_train_one_hot,
+    predictions
+)
+
+print("Initial loss:", loss)
