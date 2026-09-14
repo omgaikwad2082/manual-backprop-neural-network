@@ -38,3 +38,21 @@ X_test = scaler.transform(X_test)
 print("Training samples:", X_train.shape[0])
 print("Testing samples:", X_test.shape[0])
 print("Number of input features:", X_train.shape[1])
+
+from src.neural_network import NeuralNetwork
+
+
+# Create the neural network
+model = NeuralNetwork(
+    input_size=4,
+    hidden_size=8,
+    output_size=2
+)
+
+
+# Run the forward pass
+predictions = model.forward(X_train)
+
+print("Prediction shape:", predictions.shape)
+print("First prediction:", predictions[0])
+print("Sum of probabilities:", np.sum(predictions[0]))
