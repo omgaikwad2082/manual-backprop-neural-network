@@ -77,3 +77,43 @@ print("dW1 shape:", dW1.shape)
 print("db1 shape:", db1.shape)
 print("dW2 shape:", dW2.shape)
 print("db2 shape:", db2.shape)
+
+# Training
+learning_rate = 0.1
+epochs = 1000
+
+for epoch in range(epochs):
+
+    # Forward pass
+    predictions = model.forward(X_train)
+
+    # Calculate loss
+    loss = model.cross_entropy_loss(
+        y_train_one_hot,
+        predictions
+    )
+
+    # Backward pass
+    dW1, db1, dW2, db2 = model.backward(
+        X_train,
+        y_train_one_hot
+    )
+
+    # Update parameters
+    model.update_parameters(
+        dW1, db1, dW2, db2, learning_rate
+    )
+
+    # Print progress
+    if epoch % 100 == 0:
+        print(f"Epoch {epoch}, Loss: {loss:.4f}")
+
+# Evaluate on the test set
+test_predictions = model.forward(X_test)
+
+predicted_classes = np.argmax(test_predictions, axis=1)
+
+accuracy = np.mean(predicted_classes == y_test)
+
+print("Test accuracy:", accuracy)
+print("Test accuracy (%):", accuracy * 100)

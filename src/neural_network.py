@@ -64,3 +64,9 @@ class NeuralNetwork:
         db1 = np.sum(dZ1, axis=0, keepdims=True)
 
         return dW1, db1, dW2, db2
+    def update_parameters(self, dW1, db1, dW2, db2, learning_rate):
+        self.W1 -= learning_rate * dW1
+        self.b1 -= learning_rate * db1
+
+        self.W2 -= learning_rate * dW2
+        self.b2 -= learning_rate * db2
